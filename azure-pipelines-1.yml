@@ -1,9 +1,41 @@
-- task: AzureRmWebAppDeployment@5
-  inputs:
-    ConnectionType: 'AzureRM'
-    azureSubscription: 'adodemoplayright'
-    appType: 'webAppLinux'
-    WebAppName: 'appsvcwebapp'
-    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
-    RuntimeStack: 'DOTNETCORE|8.0'
-    DeploymentTypeLinux: 'oneDeploy'
+# Deployment pipeline triggered after build pipeline completes
+# This pipeline deploys the web application to Azure App Service
+
+trigger: none  # No CI trigger, only triggered by pipeline resource
+
+resources:
+  pipelines:
+    - pipeline: buildPipeline
+      source: azure-devops-testplans-playwright  # Name of the build pipeline in Azure DevOps
+      trigger:
+        branches:
+          include:
+            - main  # Trigger when the build pipeline completes on main branch
+
+pool:
+  vmImage: "windows-latest"
+
+stages:
+  - stage: Deploy
+    displayName: "Deploy Web Application"
+    jobs:
+      - deployment: DeployWebApp
+        displayName: "Deploy to Azure App Service"
+        environment: "production"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: buildPipeline
+                  artifact: AzDO-Demo-Artifact
+                  displayName: "Download build artifacts"
+
+                - task: AzureRmWebAppDeployment@4
+                  displayName: "Deploy Azure Web App"
+                  inputs:
+                    ConnectionType: "AzureRM"
+                    azureSubscription: "adodemoplayright"
+                    appType: "webAppLinux"
+                    WebAppName: "appsvcwebapp"
+                    packageForLinux: "$(Pipeline.Workspace)/buildPipeline/AzDO-Demo-Artifact/WebApplication1.zip"
+                    RuntimeStack: "DOTNETCORE|6.0"
