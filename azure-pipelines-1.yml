@@ -1,0 +1,9 @@
+- task: AzureRmWebAppDeployment@5
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'adodemoplayright'
+    appType: 'webAppLinux'
+    WebAppName: 'appsvcwebapp'
+    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    RuntimeStack: 'DOTNETCORE|8.0'
+    DeploymentTypeLinux: 'oneDeploy'
